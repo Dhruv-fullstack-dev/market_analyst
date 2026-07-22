@@ -62,6 +62,16 @@ def test_router_node_records_unresolved_companies(mocker):
     assert "Some Unknown Startup" in result["errors"][0]
 
 
+def test_router_node_handles_llm_exception(mocker):
+    mocker.patch("app.agents.router.get_llm", side_effect=RuntimeError("gemini quota exceeded"))
+
+    result = router_node({"query": "How is Reliance doing?"})
+
+    assert result["intent"] == "single_stock"
+    assert result["tickers"] == []
+    assert "gemini quota exceeded" in result["errors"][0]
+
+
 # ---------------------------------------------------------------------------
 # fundamental_agent_node
 # ---------------------------------------------------------------------------
@@ -231,6 +241,24 @@ def test_master_agent_node_compare_populates_verdict(mocker):
 
     assert result["verdict"] == {"recommendation": "M&M.NS", "confidence": 0.7}
     assert DISCLAIMER in result["final_answer"]
+
+
+def test_master_agent_node_handles_llm_exception(mocker):
+    mocker.patch("app.agents.master_agent.get_llm", side_effect=RuntimeError("gemini quota exceeded"))
+
+    state = {
+        "intent": "single_stock",
+        "tickers": ["RELIANCE.NS"],
+        "fundamental_findings": [],
+        "technical_findings": [],
+        "sentiment_findings": [],
+    }
+    result = master_agent_node(state)
+
+    assert result["verdict"] is None
+    assert DISCLAIMER in result["final_answer"]
+    assert "couldn't generate a full analysis" in result["final_answer"]
+    assert "gemini quota exceeded" in result["errors"][0]
 
 
 # ---------------------------------------------------------------------------

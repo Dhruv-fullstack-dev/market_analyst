@@ -10,7 +10,8 @@ class Settings(BaseSettings):
 
     # LLM (Google Gemini free tier)
     google_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-flash-latest"
+    gemini_rpm_limit: int = 5
 
     # Logging
     log_level: str = "INFO"

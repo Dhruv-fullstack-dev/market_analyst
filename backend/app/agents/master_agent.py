@@ -2,7 +2,7 @@
 
 from app.agents.schemas import MasterOutput
 from app.agents.state import AnalysisState
-from app.core.llm import get_llm
+from app.core.llm import get_llm, get_rate_limiter
 from app.core.logging import get_logger
 from app.core.timing import log_node_duration
 from app.prompts.master import build_master_messages
@@ -29,11 +29,24 @@ def master_agent_node(state: AnalysisState) -> dict:
         len(sentiment),
     )
 
-    llm = get_llm()
-    structured_llm = llm.with_structured_output(MasterOutput)
-    result: MasterOutput = structured_llm.invoke(
-        build_master_messages(intent, tickers, fundamental, technical, sentiment)
-    )
+    try:
+        llm = get_llm()
+        structured_llm = llm.with_structured_output(MasterOutput)
+        get_rate_limiter().acquire()
+        result: MasterOutput = structured_llm.invoke(
+            build_master_messages(intent, tickers, fundamental, technical, sentiment)
+        )
+    except Exception as exc:
+        logger.exception("Master synthesis failed")
+        fallback_answer = (
+            "Sorry, I couldn't generate a full analysis right now due to an internal error. "
+            "Please try again shortly."
+        )
+        return {
+            "final_answer": f"{fallback_answer}\n\n{DISCLAIMER}",
+            "verdict": None,
+            "errors": [f"master_agent: synthesis failed: {exc}"],
+        }
 
     final_answer = f"{result.final_answer.rstrip()}\n\n{DISCLAIMER}"
 

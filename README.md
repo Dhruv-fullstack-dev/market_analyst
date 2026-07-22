@@ -30,7 +30,7 @@ make install
 | Variable | Purpose |
 |---|---|
 | `GOOGLE_API_KEY` | Gemini API key (required for the agents to actually run) |
-| `GEMINI_MODEL` | Gemini model name, default `gemini-2.0-flash` |
+| `GEMINI_MODEL` | Gemini model name, default `gemini-2.5-flash` (`gemini-2.0-flash` returns `429`/quota `limit: 0` for new free-tier projects — see docs/todo.md) |
 | `LOG_LEVEL`, `LOG_FILE` | Logging config — every run appends to `dump.log` at the project root |
 | `BACKEND_URL` | Where the Streamlit UI finds the FastAPI backend, default `http://localhost:8000` |
 | `QUOTE_CACHE_TTL_SECONDS`, `HISTORY_CACHE_TTL_SECONDS`, `FUNDAMENTALS_CACHE_TTL_SECONDS`, `SEARCH_CACHE_TTL_SECONDS` | TTL cache windows for yfinance/DuckDuckGo calls |

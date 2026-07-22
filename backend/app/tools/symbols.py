@@ -3,7 +3,7 @@
 import yfinance as yf
 
 from app.agents.schemas import TickerGuessOutput
-from app.core.llm import get_llm
+from app.core.llm import get_llm, get_rate_limiter
 from app.core.logging import get_logger
 from app.prompts.symbol_guess import build_symbol_guess_messages
 
@@ -174,6 +174,7 @@ def _resolve_via_llm(company_name: str) -> str | None:
     try:
         llm = get_llm()
         structured_llm = llm.with_structured_output(TickerGuessOutput)
+        get_rate_limiter().acquire()
         guess: TickerGuessOutput = structured_llm.invoke(build_symbol_guess_messages(company_name))
     except Exception as exc:
         logger.warning("LLM ticker resolution failed for '%s': %s", company_name, exc)

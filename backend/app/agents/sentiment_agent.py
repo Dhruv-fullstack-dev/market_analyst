@@ -6,7 +6,7 @@ parallelism, rather than looping over every ticker inside a single node call.
 
 from app.agents.schemas import FindingOutput
 from app.agents.state import AnalysisState, AnalystFinding
-from app.core.llm import get_llm
+from app.core.llm import get_llm, get_rate_limiter
 from app.core.logging import get_logger
 from app.core.timing import log_node_duration
 from app.prompts.sentiment import build_sentiment_messages
@@ -28,6 +28,7 @@ def sentiment_agent_node(state: AnalysisState) -> dict:
 
         llm = get_llm()
         structured_llm = llm.with_structured_output(FindingOutput)
+        get_rate_limiter().acquire()
         result: FindingOutput = structured_llm.invoke(build_sentiment_messages(ticker, articles))
 
         finding = AnalystFinding(

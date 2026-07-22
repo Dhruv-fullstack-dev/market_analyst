@@ -11,5 +11,7 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# backend/app/main.py lands in Phase 4; this is the entrypoint once it exists.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "backend"]
+# Shell form so $PORT expands at container start - most PaaS hosts (Render, Railway, Heroku-
+# style buildpacks, Cloud Run) inject their own port and require the process to bind to it.
+# Falls back to 8000 for local `docker run`/`make docker-run`.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --app-dir backend

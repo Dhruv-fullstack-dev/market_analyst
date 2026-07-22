@@ -2,7 +2,7 @@
 
 from app.agents.schemas import RouterOutput
 from app.agents.state import AnalysisState
-from app.core.llm import get_llm
+from app.core.llm import get_llm, get_rate_limiter
 from app.core.logging import get_logger
 from app.core.timing import log_node_duration
 from app.prompts.router import build_router_messages
@@ -34,9 +34,19 @@ def router_node(state: AnalysisState) -> dict:
     query = state.get("query", "")
     logger.info("Classifying intent for query: %r", query)
 
-    llm = get_llm()
-    structured_llm = llm.with_structured_output(RouterOutput)
-    classification: RouterOutput = structured_llm.invoke(build_router_messages(query))
+    try:
+        llm = get_llm()
+        structured_llm = llm.with_structured_output(RouterOutput)
+        get_rate_limiter().acquire()
+        classification: RouterOutput = structured_llm.invoke(build_router_messages(query))
+    except Exception as exc:
+        logger.exception("Router LLM classification failed")
+        return {
+            "intent": "single_stock",
+            "tickers": [],
+            "errors": [f"router: LLM classification failed: {exc}"],
+        }
+
     logger.info("Classified intent=%s companies=%s", classification.intent, classification.companies)
 
     tickers: list[str] = []
