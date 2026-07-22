@@ -32,6 +32,15 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Streamlit Community Cloud's installer uses Poetry to parse pyproject.toml and, by default,
+# tries to build/install this repo itself as a pip package. Our code lives at backend/app (not
+# a root-level package matching the project name), so that step always fails with "No
+# file/folder found for package market-analyst". This tells Poetry to skip it and only install
+# the [project.dependencies] listed above - our local dev install still goes through hatchling
+# via `pip install -e .`, untouched by this section.
+[tool.poetry]
+package-mode = false
+
 [tool.hatch.build.targets.wheel]
 packages = ["backend/app"]
 

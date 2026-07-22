@@ -7,6 +7,12 @@ from pathlib import Path
 # entrypoints (e.g. AppTest in tests) don't — so make the sibling import robust either way.
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Local dev installs `app` (backend/app) as a package via `pip install -e .`, but some hosts
+# (e.g. Streamlit Community Cloud, whose installer skips building this repo as its own package -
+# see pyproject.toml's `[tool.poetry] package-mode = false`) never do that. Adding backend/
+# directly to sys.path makes `app.*` importable either way.
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+
 import api_client
 import streamlit as st
 from app.core.logging import get_logger
